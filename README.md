@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 電気回路シミュレータ
 
-## Getting Started
+回路図を2Dで組み立て、MNA(修正節点解析)+後退オイラー法による過渡解析でシミュレーションし、その結果を3Dビューで可視化できるNext.js製のWebアプリです。
 
-First, run the development server:
+## 主な機能
+
+- **回路メーカーエリア**: ドラッグ&ドロップで素子を配置し、端子同士をつないで回路図を作成([@xyflow/react](https://reactflow.dev/)ベース)。
+- **対応素子**: 抵抗・コンデンサ・コイル・直流電源・交流電源・スイッチA(単純なON/OFF)・スイッチB(多端子切り替え)・電流計・電圧計・アース。
+- **回路セッティングエリア**: 選択中の素子の名前・向き・パラメータ(抵抗値、電圧など)を編集。
+- **回路シミュレータエリア(3Dビュー)**: 回路図をそのまま3D空間に配置し、以下の4モードで可視化。
+  - 電位モード: 各点の電位の高さを半透明の壁で表現
+  - 電流モード: 電流の大きさを太さ、向きを矢印で表現
+  - 電力モード: 抵抗の発熱(消費電力)をヒートカラーで表現
+  - 素子情報モード: 各素子の名前・パラメータをラベル表示
+- **回路データエリア**: 各素子の電圧・電流を表・グラフ([recharts](https://recharts.org/))で確認。
+- **タイムマネージャー**: シミュレーションの再生・一時停止・任意時刻へのシーク。
+- **保存/読み込み**: ブラウザへの自動保存(localStorage)に加え、名前を付けてJSONファイルとして保存・読み込みが可能。
+
+## 技術スタック
+
+- [Next.js](https://nextjs.org/) 16 (App Router / Turbopack)
+- [React](https://react.dev/) 19 / TypeScript
+- [Tailwind CSS](https://tailwindcss.com/) 4
+- [@xyflow/react](https://reactflow.dev/) (2Dの回路キャンバス)
+- [@react-three/fiber](https://r3f.docs.pmnd.rs/) / [@react-three/drei](https://github.com/pmndrs/drei) / [three](https://threejs.org/) (3Dビュー)
+- [recharts](https://recharts.org/) (グラフ表示)
+- [mathjs](https://mathjs.org/) (連立方程式の求解)
+- [Biome](https://biomejs.dev/) (lint / format)
+- 回路シミュレーション本体(MNA + 後退オイラー法)は外部ライブラリを使わない自前実装([src/lib/circuit-solver](src/lib/circuit-solver))
+
+## セットアップ・開発
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000) を開くと画面が表示されます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## コマンド一覧
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| コマンド | 内容 |
+| --- | --- |
+| `npm run dev` | 開発サーバーを起動 |
+| `npm run build` | 本番用ビルド |
+| `npm run start` | ビルド済みアプリの起動(要`npm run build`実行済み) |
+| `npm run lint` | Biomeによるlintチェック |
+| `npm run format` | Biomeによる自動整形 |
 
-## Learn More
+## デプロイ
 
-To learn more about Next.js, take a look at the following resources:
+このアプリはシミュレーション計算・保存処理をすべてブラウザ側(クライアントサイド)で行っており、バックエンドAPI・データベース・環境変数のいずれも必要ありません。そのため、Next.jsに対応した任意の環境へそのままデプロイできます。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **[Vercel](https://vercel.com/)**: リポジトリをインポートするだけで、追加設定なしにデプロイできます。
+- **その他のNode対応環境**: `npm run build`でビルドした後、`npm run start`で起動できます。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ディレクトリ構成
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/                      # Next.js App Routerのエントリーポイント
+  components/
+    layout/                 # 画面全体のレイアウト(ヘッダー・5エリアの分割)
+    circuit-maker/           # 回路メーカーエリア(2Dキャンバス・素子アイコン・回転ロジック)
+    settings/                # 回路セッティングエリア(素子パラメータ編集)
+    simulation/              # シミュレーションの再生状態管理(SimulationProvider)
+    simulator-3d/            # 回路シミュレータエリア(3Dビュー、モード別コンポーネント)
+    data-panel/              # 回路データエリア(表・グラフ)
+    time-manager/            # タイムマネージャー(再生・シーク)
+  lib/
+    circuit-solver/          # MNA + 後退オイラー法によるシミュレーション本体
+    circuit-storage.ts        # localStorage自動保存・JSONファイルの保存/読み込み
+```
