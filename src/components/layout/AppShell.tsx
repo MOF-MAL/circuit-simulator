@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactFlowProvider } from "@xyflow/react";
 import { CircuitMakerArea } from "@/components/circuit-maker/CircuitMakerArea";
 import { DataArea } from "@/components/data-panel/DataArea";
 import { SettingsArea } from "@/components/settings/SettingsArea";
@@ -33,80 +34,101 @@ export function AppShell() {
     <div className="flex h-full w-full flex-col overflow-hidden">
       <AppHeader />
 
-      {/* ヘッダーの下の残り領域全体を、左右2つのカラムに分割する */}
-      <Group orientation="horizontal" className="min-h-0 flex-1">
-        {/* 左カラム: 回路メーカーエリア（上）＋ 回路セッティングエリア（下） */}
-        <Panel
-          id="left-column"
-          defaultSize="60"
-          minSize="15"
-          collapsible
-          collapsedSize="0"
+      {/*
+        ReactFlowProvider をルート全体(左右両カラム)に被せることで、
+        回路メーカーエリア(CircuitCanvas)・回路セッティングエリア(SettingsArea)・
+        回路データエリア(DataArea、電流計/電圧計の測定値表示)が同じ React Flow の
+        ストアを共有できる。ReactFlowProvider 自体はDOM要素を持たないので、
+        Group/Panelのレイアウトには影響しない。
+      */}
+      <ReactFlowProvider>
+        {/* ヘッダーの下の残り領域全体を、左右2つのカラムに分割する */}
+        <Group
+          id="root-columns"
+          orientation="horizontal"
+          className="min-h-0 flex-1"
         >
-          <Group orientation="vertical" className="h-full">
-            <Panel
-              id="circuit-maker-area"
-              defaultSize="65"
-              minSize="15"
-              collapsible
-              collapsedSize="0"
+          {/* 左カラム: 回路メーカーエリア（上）＋ 回路セッティングエリア（下） */}
+          <Panel
+            id="left-column"
+            defaultSize="60"
+            minSize="15"
+            collapsible
+            collapsedSize="0"
+          >
+            <Group
+              id="left-column-rows"
+              orientation="vertical"
+              className="h-full"
             >
-              <CircuitMakerArea />
-            </Panel>
+              <Panel
+                id="circuit-maker-area"
+                defaultSize="65"
+                minSize="15"
+                collapsible
+                collapsedSize="0"
+              >
+                <CircuitMakerArea />
+              </Panel>
 
-            <PanelSeparator parentGroupOrientation="vertical" />
+              <PanelSeparator parentGroupOrientation="vertical" />
 
-            <Panel
-              id="settings-area"
-              defaultSize="35"
-              minSize="10"
-              collapsible
-              collapsedSize="0"
+              <Panel
+                id="settings-area"
+                defaultSize="35"
+                minSize="10"
+                collapsible
+                collapsedSize="0"
+              >
+                <SettingsArea />
+              </Panel>
+            </Group>
+          </Panel>
+
+          <PanelSeparator parentGroupOrientation="horizontal" />
+
+          {/* 右カラム: 3Dビュー（タイムマネージャーUIを内包）＋ データエリア（下） */}
+          <Panel
+            id="right-column"
+            defaultSize="40"
+            minSize="15"
+            collapsible
+            collapsedSize="0"
+          >
+            <Group
+              id="right-column-rows"
+              orientation="vertical"
+              className="h-full"
             >
-              <SettingsArea />
-            </Panel>
-          </Group>
-        </Panel>
+              {/*
+                タイムマネージャーUIは独立したリサイズ領域にはせず、
+                Simulator3DArea の内部下部に固定表示する（3Dビューの一部という扱い）。
+              */}
+              <Panel
+                id="simulator-3d-area"
+                defaultSize="65"
+                minSize="20"
+                collapsible
+                collapsedSize="0"
+              >
+                <Simulator3DArea />
+              </Panel>
 
-        <PanelSeparator parentGroupOrientation="horizontal" />
+              <PanelSeparator parentGroupOrientation="vertical" />
 
-        {/* 右カラム: 3Dビュー（タイムマネージャーUIを内包）＋ データエリア（下） */}
-        <Panel
-          id="right-column"
-          defaultSize="40"
-          minSize="15"
-          collapsible
-          collapsedSize="0"
-        >
-          <Group orientation="vertical" className="h-full">
-            {/*
-              タイムマネージャーUIは独立したリサイズ領域にはせず、
-              Simulator3DArea の内部下部に固定表示する（3Dビューの一部という扱い）。
-            */}
-            <Panel
-              id="simulator-3d-area"
-              defaultSize="65"
-              minSize="20"
-              collapsible
-              collapsedSize="0"
-            >
-              <Simulator3DArea />
-            </Panel>
-
-            <PanelSeparator parentGroupOrientation="vertical" />
-
-            <Panel
-              id="data-area"
-              defaultSize="35"
-              minSize="10"
-              collapsible
-              collapsedSize="0"
-            >
-              <DataArea />
-            </Panel>
-          </Group>
-        </Panel>
-      </Group>
+              <Panel
+                id="data-area"
+                defaultSize="35"
+                minSize="10"
+                collapsible
+                collapsedSize="0"
+              >
+                <DataArea />
+              </Panel>
+            </Group>
+          </Panel>
+        </Group>
+      </ReactFlowProvider>
     </div>
   );
 }

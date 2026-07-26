@@ -1,8 +1,48 @@
 "use client";
 
+import { useNodes } from "@xyflow/react";
 import { useState } from "react";
+import type { CircuitElementNodeType } from "@/components/circuit-maker/nodes/CircuitElementNode";
 
 type DataTab = "graph" | "table";
+
+/**
+ * 電流計・電圧計の測定値セクション（タブ切り替えに関係なく常時表示）。
+ * まだMNA等の回路計算エンジンを実装していないため、値は "-" のプレースホルダー。
+ * 計算エンジン実装後は、ここに実際の測定値を差し込むだけでよい。
+ */
+function MeasurementsSection() {
+  const nodes = useNodes<CircuitElementNodeType>();
+  const meters = nodes.filter(
+    (node) =>
+      node.data.elementType === "ammeter" ||
+      node.data.elementType === "voltmeter",
+  );
+
+  if (meters.length === 0) return null;
+
+  return (
+    <div className="shrink-0 border-b border-slate-200 px-2 py-1.5 text-xs dark:border-slate-800">
+      <p className="mb-1 font-medium text-slate-500 dark:text-slate-400">
+        測定値
+      </p>
+      <ul className="space-y-0.5">
+        {meters.map((node) => (
+          <li
+            key={node.id}
+            className="flex items-center justify-between text-slate-600 dark:text-slate-300"
+          >
+            <span>
+              {node.data.elementType === "ammeter" ? "電流計" : "電圧計"} (ID:{" "}
+              {node.id.slice(0, 8)})
+            </span>
+            <span>- {node.data.elementType === "ammeter" ? "A" : "V"}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 /** グラフタブの中身（プレースホルダー） */
 function GraphTabContent() {
@@ -65,6 +105,8 @@ export function DataArea() {
       <p className="shrink-0 border-b border-slate-300 bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
         回路データエリア
       </p>
+
+      <MeasurementsSection />
 
       {/* グラフ / テーブル のタブ切り替えボタン */}
       <div className="flex shrink-0 gap-1 border-b border-slate-200 px-2 pt-1.5 dark:border-slate-800">
