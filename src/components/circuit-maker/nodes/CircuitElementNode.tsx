@@ -4,7 +4,6 @@ import {
   Handle,
   type Node,
   type NodeProps,
-  Position,
   useReactFlow,
   useUpdateNodeInternals,
 } from "@xyflow/react";
@@ -13,13 +12,17 @@ import { CircuitElementIcon } from "../CircuitElementIcon";
 import type { CircuitElementType } from "../circuit-elements";
 import {
   GROUND_HANDLE_POSITION,
+  isVerticalSide,
   type Rotation,
+  switchBTerminalOffsetPercent,
   TWO_TERMINAL_HANDLE_POSITIONS,
 } from "../rotation";
 
 /** このノードが持つデータ（どの種類の素子か、どちらを向いているか） */
 export type CircuitElementNodeData = {
   elementType: CircuitElementType;
+  /** ユーザが回路セッティングエリアで自由に変更できる表示名(IDとは別物)。配置直後は種別名。 */
+  name: string;
   /** 素子の向き。回路セッティングエリアの回転ボタンでのみ変更する（新規配置時は0度）。 */
   rotation: Rotation;
   /** 抵抗値・電圧など、素子ごとのパラメータ。回路セッティングエリアで編集する。 */
@@ -141,10 +144,7 @@ export function CircuitElementNode({
           {/* 各端子: 回転角に応じたb側の辺に、端子数ぶん均等に並べる。共通端子との対比で青にする */}
           {Array.from({ length: terminalCount }, (_, i) => {
             const throwSide = TWO_TERMINAL_HANDLE_POSITIONS[data.rotation].b;
-            const isVerticalSide =
-              throwSide === Position.Left || throwSide === Position.Right;
-            const offset =
-              terminalCount === 1 ? 50 : (100 * (i + 1)) / (terminalCount + 1);
+            const offset = switchBTerminalOffsetPercent(i, terminalCount);
             return (
               <Handle
                 key={`t${i + 1}`}
@@ -153,7 +153,7 @@ export function CircuitElementNode({
                 id={`t${i + 1}`}
                 style={{
                   background: VOLTAGE_REFERENCE_COLOR_B,
-                  ...(isVerticalSide
+                  ...(isVerticalSide(throwSide)
                     ? { top: `${offset}%` }
                     : { left: `${offset}%` }),
                 }}

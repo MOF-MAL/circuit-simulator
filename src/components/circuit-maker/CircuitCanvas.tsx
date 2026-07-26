@@ -22,6 +22,7 @@ import {
   CIRCUIT_ELEMENT_TYPES,
   type CircuitElementType,
   createDefaultParams,
+  elementTypeLabel,
 } from "./circuit-elements";
 import {
   CircuitElementNode,
@@ -45,6 +46,7 @@ const INITIAL_NODES: CircuitElementNodeType[] = [
     position: { x: 40, y: 40 },
     data: {
       elementType: "ground",
+      name: elementTypeLabel("ground"),
       rotation: 0,
       params: createDefaultParams("ground"),
     },
@@ -118,6 +120,7 @@ export function CircuitCanvas() {
           // 新しく配置する素子は、常に回転なし(0度)＋各素子のデフォルト値から始める
           data: {
             elementType,
+            name: elementTypeLabel(elementType),
             rotation: 0 as const,
             params: createDefaultParams(elementType),
           },

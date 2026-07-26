@@ -40,3 +40,21 @@ export const GROUND_HANDLE_POSITION: Record<Rotation, Position> = {
   180: Position.Bottom,
   270: Position.Left,
 };
+
+/** 辺(Position)が縦方向(Left/Right)かどうか。縦方向ならtop%で、横方向ならleft%でオフセットを指定する。 */
+export function isVerticalSide(position: Position): boolean {
+  return position === Position.Left || position === Position.Right;
+}
+
+/**
+ * スイッチBの端子(t1..tN、0始まりのindexで指定)を、共通端子と反対側の辺に
+ * 均等に並べるときのオフセット(0〜100の割合)。
+ * CircuitElementNode.tsx(2DのHandle位置、CSSのtop%/left%にそのまま使う)と、
+ * 3Dビュー側の端子座標計算の両方から呼ぶことで、見た目の端子位置がズレないようにする。
+ */
+export function switchBTerminalOffsetPercent(
+  index: number,
+  terminalCount: number,
+): number {
+  return terminalCount === 1 ? 50 : (100 * (index + 1)) / (terminalCount + 1);
+}
