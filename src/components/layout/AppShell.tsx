@@ -4,7 +4,6 @@ import { CircuitMakerArea } from "@/components/circuit-maker/CircuitMakerArea";
 import { DataArea } from "@/components/data-panel/DataArea";
 import { SettingsArea } from "@/components/settings/SettingsArea";
 import { Simulator3DArea } from "@/components/simulator-3d/Simulator3DArea";
-import { TimeManagerArea } from "@/components/time-manager/TimeManagerArea";
 import { AppHeader } from "./AppHeader";
 import { PanelSeparator } from "./PanelSeparator";
 import { Group, Panel } from "./resizable-panels";
@@ -71,7 +70,7 @@ export function AppShell() {
 
         <PanelSeparator parentGroupOrientation="horizontal" />
 
-        {/* 右カラム: 3Dビュー（上）＋ タイムマネージャー（中）＋ データエリア（下） */}
+        {/* 右カラム: 3Dビュー（タイムマネージャーUIを内包）＋ データエリア（下） */}
         <Panel
           id="right-column"
           defaultSize="40"
@@ -80,28 +79,18 @@ export function AppShell() {
           collapsedSize="0"
         >
           <Group orientation="vertical" className="h-full">
+            {/*
+              タイムマネージャーUIは独立したリサイズ領域にはせず、
+              Simulator3DArea の内部下部に固定表示する（3Dビューの一部という扱い）。
+            */}
             <Panel
               id="simulator-3d-area"
-              defaultSize="55"
-              minSize="15"
+              defaultSize="65"
+              minSize="20"
               collapsible
               collapsedSize="0"
             >
               <Simulator3DArea />
-            </Panel>
-
-            <PanelSeparator parentGroupOrientation="vertical" />
-
-            {/* タイムマネージャーUIは高さの意味が大きいので、ピクセル単位でサイズ指定している */}
-            <Panel
-              id="time-manager-area"
-              defaultSize={56}
-              minSize={40}
-              maxSize={120}
-              collapsible
-              collapsedSize={0}
-            >
-              <TimeManagerArea />
             </Panel>
 
             <PanelSeparator parentGroupOrientation="vertical" />

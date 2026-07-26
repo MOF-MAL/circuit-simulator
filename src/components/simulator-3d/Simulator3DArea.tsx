@@ -1,5 +1,7 @@
 "use client";
 
+import { TimeManagerArea } from "@/components/time-manager/TimeManagerArea";
+
 /**
  * 表示モード切り替えボタンのモック（電位・電流など）。
  * 実際の3Dビューと連動させるのは、@react-three/fiber を組み込む次のステップで行う。
@@ -9,6 +11,10 @@ const DISPLAY_MODES = ["電位", "電流", "抵抗"] as const;
 /**
  * 「回路シミュレータエリア」（3Dビュー）。
  * 今はまだ @react-three/fiber の Canvas を組み込んでいないプレースホルダー。
+ *
+ * タイムマネージャーUI（再生ボタン＋スライダー）は、独立したリサイズ領域にはせず、
+ * このエリアの一部としていちばん下に固定表示している
+ * （手書きレイアウトで、3Dビューのすぐ下に配置されていたため）。
  */
 export function Simulator3DArea() {
   return (
@@ -36,7 +42,7 @@ export function Simulator3DArea() {
         </div>
       </div>
 
-      <div className="flex flex-1 items-center justify-center bg-slate-900">
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-slate-900">
         <p className="rounded-md bg-slate-800/80 px-3 py-1.5 text-center text-xs text-slate-300">
           3Dビューエリア
           <br />
@@ -45,6 +51,9 @@ export function Simulator3DArea() {
           （マウスドラッグでの視点操作にも対応予定）
         </p>
       </div>
+
+      {/* タイムマネージャーUI: 3Dビューエリアの下部に固定の帯として配置 */}
+      <TimeManagerArea />
     </div>
   );
 }

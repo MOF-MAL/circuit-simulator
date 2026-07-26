@@ -16,7 +16,7 @@ export function TimeManagerArea() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   return (
-    <div className="flex h-full w-full items-center gap-3 border-t border-slate-300 bg-slate-100 px-3 dark:border-slate-700 dark:bg-slate-800">
+    <div className="flex h-12 w-full shrink-0 items-center gap-3 border-t border-slate-300 bg-slate-100 px-3 dark:border-slate-700 dark:bg-slate-800">
       {/* 再生・一時停止の切り替えボタン */}
       <button
         type="button"
