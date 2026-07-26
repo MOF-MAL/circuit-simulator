@@ -26,10 +26,12 @@ export type CircuitElementNodeData = {
   params: Record<string, number | boolean>;
 };
 
-/** 正極(赤)・負極(青)の色分けをする電源素子かどうか */
-function isPowerSource(elementType: CircuitElementType): boolean {
-  return elementType === "dc-source" || elementType === "ac-source";
-}
+/**
+ * 電圧の向きの基準(elementVoltages = Va - Vbの計算と対応)を色で示す。
+ * a(スイッチBは共通端子)を赤、b(スイッチBは各端子)を青にする。
+ */
+const VOLTAGE_REFERENCE_COLOR_A = "#ef4444";
+const VOLTAGE_REFERENCE_COLOR_B = "#3b82f6";
 
 /** React Flow の Node 型に、上のデータ型とノードタイプ名("circuitElement")を組み合わせたもの */
 export type CircuitElementNodeType = Node<
@@ -129,13 +131,14 @@ export function CircuitElementNode({
         />
       ) : isSwitchB ? (
         <>
-          {/* 共通端子: 回転角に応じたa側の辺に1つ */}
+          {/* 共通端子: 回転角に応じたa側の辺に1つ。電圧の向きの基準として赤にする */}
           <Handle
             type="source"
             position={TWO_TERMINAL_HANDLE_POSITIONS[data.rotation].a}
             id="common"
+            style={{ background: VOLTAGE_REFERENCE_COLOR_A }}
           />
-          {/* 各端子: 回転角に応じたb側の辺に、端子数ぶん均等に並べる */}
+          {/* 各端子: 回転角に応じたb側の辺に、端子数ぶん均等に並べる。共通端子との対比で青にする */}
           {Array.from({ length: terminalCount }, (_, i) => {
             const throwSide = TWO_TERMINAL_HANDLE_POSITIONS[data.rotation].b;
             const isVerticalSide =
@@ -148,11 +151,12 @@ export function CircuitElementNode({
                 type="source"
                 position={throwSide}
                 id={`t${i + 1}`}
-                style={
-                  isVerticalSide
+                style={{
+                  background: VOLTAGE_REFERENCE_COLOR_B,
+                  ...(isVerticalSide
                     ? { top: `${offset}%` }
-                    : { left: `${offset}%` }
-                }
+                    : { left: `${offset}%` }),
+                }}
               />
             );
           })}
@@ -161,27 +165,19 @@ export function CircuitElementNode({
         <>
           {/*
             それ以外の素子は2端子：回転角に応じた辺にHandleを配置。
-            電源素子(直流電源・交流電源)は、a=正極を赤、b=負極を青にして見分けやすくする。
+            全素子共通で、a=赤・b=青にして電圧の向きの基準(elementVoltages=Va-Vb)を示す。
           */}
           <Handle
             type="source"
             position={TWO_TERMINAL_HANDLE_POSITIONS[data.rotation].a}
             id="a"
-            style={
-              isPowerSource(data.elementType)
-                ? { background: "#ef4444" }
-                : undefined
-            }
+            style={{ background: VOLTAGE_REFERENCE_COLOR_A }}
           />
           <Handle
             type="source"
             position={TWO_TERMINAL_HANDLE_POSITIONS[data.rotation].b}
             id="b"
-            style={
-              isPowerSource(data.elementType)
-                ? { background: "#3b82f6" }
-                : undefined
-            }
+            style={{ background: VOLTAGE_REFERENCE_COLOR_B }}
           />
         </>
       )}

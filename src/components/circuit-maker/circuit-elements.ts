@@ -76,6 +76,13 @@ export const ELEMENT_PARAM_DEFS: Record<CircuitElementType, ElementParamDef[]> =
         kind: "number",
         defaultValue: 0.000001,
       },
+      {
+        key: "initialCharge",
+        label: "初期電荷",
+        unit: "C",
+        kind: "number",
+        defaultValue: 0,
+      },
     ],
     inductor: [
       {
