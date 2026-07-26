@@ -33,12 +33,10 @@ import { Group, Panel } from "./resizable-panels";
 export function AppShell() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
-      <AppHeader />
-
       {/*
-        ReactFlowProvider をルート全体(左右両カラム)に被せることで、
-        回路メーカーエリア(CircuitCanvas)・回路セッティングエリア(SettingsArea)・
-        回路データエリア(DataArea、電流計/電圧計の測定値表示)が同じ React Flow の
+        ReactFlowProvider をヘッダーごとルート全体に被せることで、
+        メニューバー(AppHeader、回路のセーブ・ロード)・回路メーカーエリア(CircuitCanvas)・
+        回路セッティングエリア(SettingsArea)・回路データエリア(DataArea)が同じ React Flow の
         ストアを共有できる。ReactFlowProvider 自体はDOM要素を持たないので、
         Group/Panelのレイアウトには影響しない。
       */}
@@ -49,6 +47,8 @@ export function AppShell() {
           読む必要があるため、ReactFlowProviderの内側に置く。
         */}
         <SimulationProvider>
+          <AppHeader />
+
           {/* ヘッダーの下の残り領域全体を、左右2つのカラムに分割する */}
           <Group
             id="root-columns"

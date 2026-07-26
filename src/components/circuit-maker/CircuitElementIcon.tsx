@@ -108,7 +108,7 @@ export function CircuitElementIcon({
       const closed = state?.closed ?? false;
       return (
         <svg {...commonProps}>
-          <title>スイッチA（{closed ? "閉" : "開"}）の回路記号</title>
+          <title>{`スイッチA（${closed ? "閉" : "開"}）の回路記号`}</title>
           <circle cx="8" cy="12" r="1.6" fill="currentColor" />
           <circle cx="32" cy="12" r="1.6" fill="currentColor" />
           <path

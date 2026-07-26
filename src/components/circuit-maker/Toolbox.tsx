@@ -6,6 +6,7 @@ import {
   CIRCUIT_ELEMENT_DRAG_DATA_KEY,
   CIRCUIT_ELEMENT_TYPES,
   createDefaultParams,
+  elementTypeLabel,
 } from "./circuit-elements";
 import type { CircuitElementNodeType } from "./nodes/CircuitElementNode";
 
@@ -34,6 +35,7 @@ export function Toolbox() {
         position: { x: 100 + (n % 6) * 60, y: 100 + Math.floor(n / 6) * 60 },
         data: {
           elementType,
+          name: elementTypeLabel(elementType),
           rotation: 0 as const,
           params: createDefaultParams(elementType),
         },

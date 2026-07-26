@@ -1,18 +1,9 @@
 "use client";
 
 import { useNodes, useReactFlow } from "@xyflow/react";
-import {
-  CIRCUIT_ELEMENT_TYPES,
-  ELEMENT_PARAM_DEFS,
-} from "@/components/circuit-maker/circuit-elements";
+import { ELEMENT_PARAM_DEFS } from "@/components/circuit-maker/circuit-elements";
 import type { CircuitElementNodeType } from "@/components/circuit-maker/nodes/CircuitElementNode";
 import { nextRotation } from "@/components/circuit-maker/rotation";
-
-/** 素子の種類のID(例: "resistor")から、日本語ラベル(例: "抵抗")を逆引きする */
-function elementLabel(elementType: string): string {
-  const found = CIRCUIT_ELEMENT_TYPES.find((type) => type.id === elementType);
-  return found ? found.label : elementType;
-}
 
 /**
  * 「回路セッティングエリア」全体。
@@ -51,11 +42,16 @@ export function SettingsArea() {
         </div>
       ) : (
         <div className="divide-y divide-slate-200 dark:divide-slate-800">
-          {/* 選択中の素子・ID・回転ボタンを1行にまとめてコンパクトに表示 */}
+          {/* 選択中の素子名(編集可)・ID・回転ボタンを1行にまとめてコンパクトに表示 */}
           <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs">
-            <span className="truncate font-semibold text-slate-700 dark:text-slate-200">
-              {elementLabel(selectedNode.data.elementType)}
-            </span>
+            <input
+              type="text"
+              value={selectedNode.data.name}
+              onChange={(event) =>
+                updateNodeData(selectedNode.id, { name: event.target.value })
+              }
+              className="min-w-0 flex-1 truncate rounded border border-transparent bg-transparent px-1 font-semibold text-slate-700 hover:border-slate-300 focus:border-slate-400 focus:outline-none dark:text-slate-200 dark:hover:border-slate-600"
+            />
             <span className="truncate text-[11px] text-slate-400">
               ID: {selectedNode.id}
             </span>

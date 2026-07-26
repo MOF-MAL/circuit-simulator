@@ -47,6 +47,28 @@ export function createInitialSolverState(
 }
 
 /**
+ * 既に計算済みのスナップショット(ある時刻の断面)から、その時刻時点の後退オイラー法の状態を
+ * 復元する。コンデンサ電圧・コイル電流は連続量(トポロジーが変わっても瞬間的には変化しない)なので、
+ * スイッチの状態だけが変わったタイミングでその時刻から計算を続けたい場合、この状態を
+ * 新しいトポロジー(切り替え後のスイッチ状態)でのrunSimulationの初期状態として渡せばよい。
+ */
+export function solverStateFromSnapshot(
+  nodes: CircuitElementNodeType[],
+  snapshot: SimulationSnapshot,
+): SolverState {
+  const capacitorVoltage = new Map<string, number>();
+  const inductorCurrent = new Map<string, number>();
+  for (const node of nodes) {
+    if (node.data.elementType === "capacitor") {
+      capacitorVoltage.set(node.id, snapshot.elementVoltages[node.id] ?? 0);
+    } else if (node.data.elementType === "inductor") {
+      inductorCurrent.set(node.id, snapshot.elementCurrents[node.id] ?? 0);
+    }
+  }
+  return { capacitorVoltage, inductorCurrent };
+}
+
+/**
  * 現在のトポロジー・素子パラメータで、startTimeSecからstepCountステップぶんの
  * 後退オイラー法シミュレーションを実行する。initialStateには、直前までの
  * コンデンサ電圧・コイル電流(createInitialSolverStateで作った初期状態、または

@@ -165,6 +165,12 @@ export const ELEMENT_PARAM_DEFS: Record<CircuitElementType, ElementParamDef[]> =
     ground: [],
   };
 
+/** 素子の種類ID(例: "resistor")から、日本語ラベル(例: "抵抗")を逆引きする */
+export function elementTypeLabel(elementType: CircuitElementType): string {
+  const found = CIRCUIT_ELEMENT_TYPES.find((type) => type.id === elementType);
+  return found ? found.label : elementType;
+}
+
 /** ノードを新規作成するときに使う、素子の種類ごとの初期パラメータ値を作る */
 export function createDefaultParams(
   elementType: CircuitElementType,

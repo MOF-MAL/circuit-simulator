@@ -9,7 +9,7 @@ export function terminalKey(nodeId: string, handleId: string): TerminalKey {
 }
 
 /** 素子の種類ごとに、端子のハンドルIDの一覧を返す(CircuitElementNode.tsxの描画と対応させる) */
-function getHandleIds(node: CircuitElementNodeType): string[] {
+export function getHandleIds(node: CircuitElementNodeType): string[] {
   if (node.data.elementType === "ground") return ["a"];
   if (node.data.elementType === "switch-b") {
     const terminalCount = Math.max(

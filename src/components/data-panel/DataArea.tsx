@@ -2,20 +2,11 @@
 
 import { useNodes } from "@xyflow/react";
 import { useState } from "react";
-import {
-  CIRCUIT_ELEMENT_TYPES,
-  type CircuitElementType,
-} from "@/components/circuit-maker/circuit-elements";
 import type { CircuitElementNodeType } from "@/components/circuit-maker/nodes/CircuitElementNode";
+import { LineChart } from "@/components/data-panel/LineChart";
 import { useSimulation } from "@/components/simulation/SimulationProvider";
 
 type DataTab = "graph" | "table";
-
-/** 素子の種類のID(例: "resistor")から、日本語ラベル(例: "抵抗")を逆引きする */
-function elementLabel(elementType: CircuitElementType): string {
-  const found = CIRCUIT_ELEMENT_TYPES.find((type) => type.id === elementType);
-  return found ? found.label : elementType;
-}
 
 /** 数値を小数第3位までの文字列にする。値が定義されていない場合は"-"にする。 */
 function formatValue(value: number | undefined): string {
@@ -58,7 +49,7 @@ function MeasurementsSection() {
               className="flex items-center justify-between text-slate-600 dark:text-slate-300"
             >
               <span>
-                {isAmmeter ? "電流計" : "電圧計"} (ID: {node.id.slice(0, 8)})
+                {node.data.name} (ID: {node.id.slice(0, 8)})
               </span>
               <span>
                 {formatValue(value)} {isAmmeter ? "A" : "V"}
@@ -71,11 +62,101 @@ function MeasurementsSection() {
   );
 }
 
-/** グラフタブの中身（プレースホルダー） */
+/**
+ * グラフタブの中身。
+ * 素子選択タブで選んだ1つの素子について、電流(I-t)・電圧(V-t)のグラフを表示する。
+ * 電流計・電圧計が回路にあれば、その最初の1つをデフォルトの選択にする。
+ */
 function GraphTabContent() {
+  const nodes = useNodes<CircuitElementNodeType>();
+  const { snapshots, errorReason, graphDomainSec } = useSimulation();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  if (errorReason) {
+    return (
+      <p className="px-2 py-3 text-xs text-red-500">
+        計算できません: {errorReason}
+      </p>
+    );
+  }
+
+  const elements = nodes.filter((node) => node.data.elementType !== "ground");
+  if (elements.length === 0) {
+    return (
+      <p className="px-2 py-3 text-xs text-slate-400">
+        素子が配置されていません。
+      </p>
+    );
+  }
+
+  // 電流計・電圧計があればデフォルトでそれを選択する。選択中の素子が削除されていたら
+  // 自動的にフォールバックする(effectで初期化せず、レンダーのたびに導出する)。
+  const meter = elements.find(
+    (node) =>
+      node.data.elementType === "ammeter" ||
+      node.data.elementType === "voltmeter",
+  );
+  const activeId =
+    selectedId && elements.some((node) => node.id === selectedId)
+      ? selectedId
+      : (meter ?? elements[0]).id;
+  const activeNode = elements.find((node) => node.id === activeId);
+
+  const currentPoints = snapshots.map((s) => ({
+    x: s.timeSec,
+    y: s.elementCurrents[activeId] ?? 0,
+  }));
+  const voltagePoints = snapshots.map((s) => ({
+    x: s.timeSec,
+    y: s.elementVoltages[activeId] ?? 0,
+  }));
+
   return (
-    <div className="flex h-full items-center justify-center text-xs text-slate-400">
-      グラフ表示エリア（後で mathjs の計算結果をここにプロットします）
+    <div className="flex h-full flex-col gap-2 overflow-auto">
+      {/* 素子選択タブ */}
+      <div className="flex flex-wrap gap-1">
+        {elements.map((node) => (
+          <button
+            key={node.id}
+            type="button"
+            onClick={() => setSelectedId(node.id)}
+            className={
+              node.id === activeId
+                ? "rounded bg-blue-500 px-2 py-0.5 text-[10px] text-white"
+                : "rounded bg-slate-200 px-2 py-0.5 text-[10px] text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+            }
+          >
+            {node.data.name} ({node.id.slice(0, 4)})
+          </button>
+        ))}
+      </div>
+
+      {activeNode && (
+        <div className="flex flex-col gap-3">
+          <div>
+            <p className="mb-1 font-medium text-slate-600 dark:text-slate-300">
+              {activeNode.data.name} の電流 (I-t)
+            </p>
+            <LineChart
+              points={currentPoints}
+              domain={graphDomainSec}
+              unit="A"
+              color="#ef4444"
+            />
+          </div>
+          <div>
+            <p className="mb-1 font-medium text-slate-600 dark:text-slate-300">
+              {activeNode.data.name} の電圧 (V-t)
+            </p>
+            <LineChart
+              points={voltagePoints}
+              domain={graphDomainSec}
+              unit="V"
+              color="#3b82f6"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -115,7 +196,7 @@ function TableTabContent() {
             className="border-b border-slate-100 dark:border-slate-800"
           >
             <td className="px-2 py-1 text-slate-600 dark:text-slate-300">
-              {elementLabel(node.data.elementType)}
+              {node.data.name}
             </td>
             <td className="px-2 py-1 text-slate-600 dark:text-slate-300">
               {formatValue(currentSnapshot?.elementVoltages[node.id])}
