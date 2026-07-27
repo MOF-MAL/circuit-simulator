@@ -151,6 +151,7 @@ export function PotentialMode({
     });
   }
   for (const element of layout.elements) {
+    if (!element.active) continue; // 配線されていない・スイッチオフなど「オンでない」素子
     const endpoints = getElementEndpoints(element);
     if (!endpoints) continue; // アース、または未接続のスイッチB(回路的に開いている)
     wallSegments.push({

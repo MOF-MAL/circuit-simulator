@@ -1,6 +1,6 @@
 "use client";
 
-import { useEdges, useNodes } from "@xyflow/react";
+import { type Edge, useEdges, useNodes } from "@xyflow/react";
 import { useMemo } from "react";
 import type { CircuitElementNodeType } from "@/components/circuit-maker/nodes/CircuitElementNode";
 import {
@@ -9,8 +9,8 @@ import {
   terminalKey,
 } from "@/lib/circuit-solver/topology";
 import {
+  elementSizePx,
   flowToWorldXZ,
-  NODE_SIZE_PX,
   terminalAbsolutePosition,
 } from "./geometry";
 
@@ -27,6 +27,13 @@ export type ElementLayout = {
   /** ノード矩形の中心(px→3Dワールド座標)。スイッチBのハブ表示などに使う */
   center: { x: number; z: number };
   terminals: TerminalLayout[];
+  /**
+   * 「回路がオンになっている」素子かどうか(電位・電流・電力モードでエフェクトを
+   * 表示してよいか)。自分の使う端子が両方とも配線されており、かつ(スイッチAなら)
+   * 閉じていることを表す。アース・節点・未接続のスイッチBはgetElementEndpointsが
+   * 既にnullを返すため、そもそも常にfalseになる。
+   */
+  active: boolean;
 };
 
 export type WireLayout = {
@@ -66,16 +73,18 @@ export function use3DCircuitLayout(): CircuitLayout {
         const [x, z] = flowToWorldXZ(terminalAbsolutePosition(node, handleId));
         return { handleId, netId: netOf(node.id, handleId), x, z };
       });
+      const sizePx = elementSizePx(node.data.elementType);
       const [centerX, centerZ] = flowToWorldXZ({
-        x: node.position.x + NODE_SIZE_PX / 2,
-        y: node.position.y + NODE_SIZE_PX / 2,
+        x: node.position.x + sizePx / 2,
+        y: node.position.y + sizePx / 2,
       });
-      return {
+      const partial = {
         id: node.id,
         node,
         center: { x: centerX, z: centerZ },
         terminals,
       };
+      return { ...partial, active: isElementActive(partial, edges) };
     });
 
     const wires: WireLayout[] = edges.flatMap((edge) => {
@@ -112,7 +121,7 @@ export function use3DCircuitLayout(): CircuitLayout {
  * 電位・電流・電力の各モードで、素子を1本の区間として扱うときに共通して使う。
  */
 export function getElementEndpoints(
-  element: ElementLayout,
+  element: Pick<ElementLayout, "node" | "terminals">,
 ): { a: TerminalLayout; b: TerminalLayout } | null {
   const { elementType, params } = element.node.data;
   if (elementType === "ground") return null;
@@ -127,4 +136,27 @@ export function getElementEndpoints(
 
   const [a, b] = element.terminals;
   return a && b ? { a, b } : null;
+}
+
+/**
+ * 「回路がオンになっている」素子かどうか: 自分が使う端子(a/b、スイッチBならcommon/
+ * 接続中の端子)の両方に実際にワイヤーが1本以上つながっており、かつスイッチAなら
+ * 閉じていること。電位・電流・電力モードで、非アクティブな素子にはエフェクトを
+ * 表示しないようにするための判定(ループ途中の別の素子までは連動させない、素子単体の判定)。
+ */
+function isElementActive(
+  element: Pick<ElementLayout, "id" | "node" | "terminals">,
+  edges: Edge[],
+): boolean {
+  const endpoints = getElementEndpoints(element);
+  if (!endpoints) return false;
+  const { elementType, params } = element.node.data;
+  if (elementType === "switch-a" && !params.closed) return false;
+  const isWired = (handleId: string) =>
+    edges.some(
+      (e) =>
+        (e.source === element.id && e.sourceHandle === handleId) ||
+        (e.target === element.id && e.targetHandle === handleId),
+    );
+  return isWired(endpoints.a.handleId) && isWired(endpoints.b.handleId);
 }

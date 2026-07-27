@@ -9,6 +9,9 @@ import { Toolbox } from "./Toolbox";
  * 「回路メーカーエリア」全体。
  * 左側の「ツールボックス」と、右側の「キャンバス」を、
  * 横方向にリサイズ可能な Group で並べている。
+ *
+ * 操作モード（編集/消しゴム）の切り替えボタンとクリアボタンは、
+ * このヘッダーではなく CircuitCanvas 側でキャンバス上のオーバーレイとして表示している。
  */
 export function CircuitMakerArea() {
   return (

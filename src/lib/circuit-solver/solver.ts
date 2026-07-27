@@ -21,6 +21,7 @@ function getEndpoints(
 ): Endpoints | undefined {
   const { elementType } = node.data;
   if (elementType === "ground") return undefined;
+  if (elementType === "junction") return undefined;
   if (elementType === "switch-b") {
     const connected = Number(node.data.params.connectedTerminal) || 0;
     if (connected === 0) return undefined;

@@ -39,7 +39,7 @@ export function PowerMode({
   snapshot: SimulationSnapshot | null;
 }) {
   const resistors = layout.elements.filter(
-    (element) => element.node.data.elementType === "resistor",
+    (element) => element.node.data.elementType === "resistor" && element.active,
   );
 
   const instantMaxPower = snapshot
