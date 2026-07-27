@@ -7,7 +7,9 @@ import {
   ConnectionMode,
   Controls,
   type Edge,
+  type EdgeMouseHandler,
   type NodeMouseHandler,
+  Panel,
   ReactFlow,
   useEdgesState,
   useNodesState,
@@ -16,7 +18,7 @@ import {
 // React Flow 本体の見た目（ノードの枠線・線の描画など）に必要なCSS。
 // Tailwind CSS のクラスと衝突しないよう、React Flow を実際に使うこのファイルの中だけで読み込む。
 import "@xyflow/react/dist/style.css";
-import { type DragEvent, useCallback } from "react";
+import { type DragEvent, useCallback, useState } from "react";
 import {
   CIRCUIT_ELEMENT_DRAG_DATA_KEY,
   CIRCUIT_ELEMENT_TYPES,
@@ -37,6 +39,21 @@ import {
 const nodeTypes = {
   circuitElement: CircuitElementNode,
 };
+
+/** 回路メーカーエリアの操作モード。切り替えボタンの並び順・ラベルもここで定義する */
+type CircuitMakerMode = "edit" | "eraser";
+const MODE_OPTIONS: { id: CircuitMakerMode; label: string }[] = [
+  { id: "edit", label: "編集モード" },
+  { id: "eraser", label: "消しゴムモード" },
+];
+
+/** キャンバス上に浮かべるボタン共通のカード状コンテナ。目立たせるため白背景+枠線+影を付ける */
+const FLOATING_PANEL_CLASS =
+  "flex gap-1 rounded-md border border-slate-300 bg-white p-1 shadow-md dark:border-slate-600 dark:bg-slate-800";
+const FLOATING_BUTTON_ACTIVE_CLASS =
+  "rounded px-3 py-1.5 text-xs font-medium text-white bg-blue-500";
+const FLOATING_BUTTON_CLASS =
+  "rounded px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700";
 
 /** 起動時から回路メーカーエリアに置いておく、電位の基準となるアース */
 const INITIAL_NODES: CircuitElementNodeType[] = [
@@ -61,10 +78,14 @@ const INITIAL_NODES: CircuitElementNodeType[] = [
  * ReactFlowProvider は AppShell.tsx 側で（回路セッティングエリアと共有できるように）
  * 上位に引き上げてあるため、このコンポーネント自身はラップしていない。
  *
+ * 操作モード(編集/消しゴム)とクリアボタンは、nodes/edgesのローカルstateをこのコンポーネントが
+ * 持っているため、ここで完結させて Panel（React Flowのキャンバス上オーバーレイ）として表示する。
+ *
  * 実際の回路計算（MNAなど）はまだ行っていない。
  * 今のところは「素子を自由に配置して線でつなぐ・回転させる」という見た目・操作性のみを実現している。
  */
 export function CircuitCanvas() {
+  const [mode, setMode] = useState<CircuitMakerMode>("edit");
   const [nodes, setNodes, onNodesChange] =
     useNodesState<CircuitElementNodeType>(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -72,6 +93,15 @@ export function CircuitCanvas() {
   // キャンバスの拡大縮小・スクロールを考慮した「キャンバス内部の座標」に変換してくれる関数。
   const { screenToFlowPosition, getNodes } =
     useReactFlow<CircuitElementNodeType>();
+
+  // アース以外のすべての素子・ワイヤーを消去する(確認ダイアログで誤操作を防ぐ)
+  const handleClear = useCallback(() => {
+    if (!window.confirm("回路をクリアしますか?(アースは残ります)")) return;
+    setNodes((currentNodes) =>
+      currentNodes.filter((n) => n.data.elementType === "ground"),
+    );
+    setEdges([]);
+  }, [setNodes, setEdges]);
 
   // ツールボックスの素子をキャンバス上にドラッグしている間、常に呼ばれる。
   // ここで event.preventDefault() をしないと、ブラウザが「ドロップ不可」として扱ってしまう。
@@ -146,6 +176,31 @@ export function CircuitCanvas() {
     [setEdges],
   );
 
+  // 消しゴムモード中に素子をクリックすると、その素子と接続ワイヤーを削除する。
+  // アースは電位の基準となる特別な素子のため、消しゴムモードでも保護して削除させない。
+  const onNodeClick: NodeMouseHandler<CircuitElementNodeType> = useCallback(
+    (_event, node) => {
+      if (mode !== "eraser") return;
+      if (node.data.elementType === "ground") return;
+      setNodes((currentNodes) => currentNodes.filter((n) => n.id !== node.id));
+      setEdges((currentEdges) =>
+        currentEdges.filter(
+          (e) => e.source !== node.id && e.target !== node.id,
+        ),
+      );
+    },
+    [mode, setNodes, setEdges],
+  );
+
+  // 消しゴムモード中にワイヤーをクリックすると、その配線を削除する
+  const onEdgeClick: EdgeMouseHandler<Edge> = useCallback(
+    (_event, edge) => {
+      if (mode !== "eraser") return;
+      setEdges((currentEdges) => currentEdges.filter((e) => e.id !== edge.id));
+    },
+    [mode, setEdges],
+  );
+
   // 素子を右クリックしたときにも、左クリックと同じように選択状態にする
   // （回路セッティングエリアで確認・回転操作ができるようにするため）。
   const onNodeContextMenu: NodeMouseHandler<CircuitElementNodeType> =
@@ -195,6 +250,8 @@ export function CircuitCanvas() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onEdgeDoubleClick={onEdgeDoubleClick}
+        onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
         onNodeContextMenu={onNodeContextMenu}
         onNodeDragStop={onNodeDragStop}
         // ノードをドラッグし始めた時点で、そのノードを選択状態にする(React Flowの既定動作を明示)
@@ -216,6 +273,33 @@ export function CircuitCanvas() {
         <Background />
         {/* 右下に表示される、拡大・縮小・全体表示ボタン */}
         <Controls />
+
+        {/* 左上: 操作モード(編集/消しゴム)の切り替え。キャンバス上に浮かせて目立たせる */}
+        <Panel position="top-left" className={FLOATING_PANEL_CLASS}>
+          {MODE_OPTIONS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setMode(id)}
+              className={
+                mode === id ? FLOATING_BUTTON_ACTIVE_CLASS : FLOATING_BUTTON_CLASS
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </Panel>
+
+        {/* 右上: 回路を一括で消去するクリアボタン */}
+        <Panel position="top-right" className={FLOATING_PANEL_CLASS}>
+          <button
+            type="button"
+            onClick={handleClear}
+            className={FLOATING_BUTTON_CLASS}
+          >
+            クリア
+          </button>
+        </Panel>
       </ReactFlow>
     </div>
   );

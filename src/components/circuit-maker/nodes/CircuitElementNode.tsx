@@ -61,7 +61,8 @@ export function CircuitElementNode({
   id,
   data,
 }: NodeProps<CircuitElementNodeType>) {
-  const isGround = data.elementType === "ground";
+  // アースと節点はどちらも端子1つのみ:同じHandle描画・回転ロジックを共用する
+  const isGround = data.elementType === "ground" || data.elementType === "junction";
   const isSwitchA = data.elementType === "switch-a";
   const isSwitchB = data.elementType === "switch-b";
   // スイッチBの端子数(1未満にはしない)
@@ -126,7 +127,7 @@ export function CircuitElementNode({
       </div>
 
       {isGround ? (
-        // 接地は1端子のみ：回転角に応じた辺にHandleを1つ配置
+        // 接地・節点は1端子のみ：回転角に応じた辺にHandleを1つ配置
         <Handle
           type="source"
           position={GROUND_HANDLE_POSITION[data.rotation]}

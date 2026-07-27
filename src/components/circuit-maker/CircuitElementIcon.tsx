@@ -206,5 +206,15 @@ export function CircuitElementIcon({
           <path d="M20 2v8M12 10h16M15 15h10M18 20h4" />
         </svg>
       );
+
+    case "junction":
+      // リード線＋中心の塗りつぶし点＝節点(合流・分流点)の回路記号
+      return (
+        <svg {...commonProps}>
+          <title>節点の回路記号</title>
+          <path d="M20 2v8" />
+          <circle cx="20" cy="12" r="2.5" fill="currentColor" />
+        </svg>
+      );
   }
 }

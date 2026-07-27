@@ -62,7 +62,7 @@ export function terminalAbsolutePosition(
   const centerY = node.position.y + NODE_SIZE_PX / 2;
   const { elementType, rotation } = node.data;
 
-  if (elementType === "ground") {
+  if (elementType === "ground" || elementType === "junction") {
     return sideOffsetToPoint(
       centerX,
       centerY,

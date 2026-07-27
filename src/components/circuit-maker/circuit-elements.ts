@@ -22,6 +22,9 @@ export const CIRCUIT_ELEMENT_TYPES = [
   { id: "switch-b", label: "スイッチB", terminalCount: 3, maxCount: undefined },
   { id: "ammeter", label: "電流計", terminalCount: 2, maxCount: undefined },
   { id: "voltmeter", label: "電圧計", terminalCount: 2, maxCount: undefined },
+  // 節点: 端子1つのみの合流・分流点。複数のワイヤーを同じ端子に接続できるため、
+  // 回路の形を整えたり配線をまとめたりする用途に使う(個数制限なし)。
+  { id: "junction", label: "節点", terminalCount: 1, maxCount: undefined },
   // アースは電位の基準となる1点のみが意味を持つため、maxCountで複数配置を禁止する
   { id: "ground", label: "アース", terminalCount: 1, maxCount: 1 },
 ] as const;
@@ -163,6 +166,7 @@ export const ELEMENT_PARAM_DEFS: Record<CircuitElementType, ElementParamDef[]> =
       },
     ],
     ground: [],
+    junction: [],
   };
 
 /** 素子の種類ID(例: "resistor")から、日本語ラベル(例: "抵抗")を逆引きする */

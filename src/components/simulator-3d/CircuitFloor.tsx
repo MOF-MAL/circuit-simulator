@@ -162,9 +162,13 @@ export function CircuitFloor({
       {layout.wires.map((wire) => (
         <FlatWire key={wire.edgeId} wire={wire} />
       ))}
-      {layout.elements.map((element) => (
-        <FlatIcon key={element.id} element={element} />
-      ))}
+      {/* 節点は合流・分流のためだけの素子で、床に記号を描く意味がないため描画対象から除外する
+          (配線自体は各端子の絶対位置をそのまま使うため、この除外の影響を受けない) */}
+      {layout.elements
+        .filter((element) => element.node.data.elementType !== "junction")
+        .map((element) => (
+          <FlatIcon key={element.id} element={element} />
+        ))}
       {children}
     </group>
   );
