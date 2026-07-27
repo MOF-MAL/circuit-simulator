@@ -51,10 +51,15 @@ export function isVerticalSide(position: Position): boolean {
  * 均等に並べるときのオフセット(0〜100の割合)。
  * CircuitElementNode.tsx(2DのHandle位置、CSSのtop%/left%にそのまま使う)と、
  * 3Dビュー側の端子座標計算の両方から呼ぶことで、見た目の端子位置がズレないようにする。
+ * CircuitElementIcon.tsxの記号側の端子Y座標(y=5〜25、viewBox高さ30に対する割合)と
+ * 同じ分布にしておくことで、端子の見た目ドットが記号の接点円とちょうど同じ位置に重なる
+ * (ズレて別の位置に表示されない)ようにしている。
  */
 export function switchBTerminalOffsetPercent(
   index: number,
   terminalCount: number,
 ): number {
-  return terminalCount === 1 ? 50 : (100 * (index + 1)) / (terminalCount + 1);
+  if (terminalCount === 1) return 50;
+  const y = 5 + (index * 20) / (terminalCount - 1);
+  return (y / 30) * 100;
 }

@@ -27,7 +27,7 @@ export function Legend({
   if (mode === "potential") {
     content = <span>高さ = 電位(相対値)</span>;
   } else if (mode === "current") {
-    content = <span>太さ = 電流の大きさ(相対値)、矢印 = 向き</span>;
+    content = <span>粒子の速さ = 電流の大きさ(相対値)、向き = 電流の向き</span>;
   } else if (mode === "power") {
     content = (
       <div className="flex items-center gap-1.5">

@@ -5,6 +5,7 @@
 import { Position } from "@xyflow/react";
 import * as THREE from "three";
 import {
+  type CircuitElementType,
   ELEMENT_PARAM_DEFS,
   elementTypeLabel,
 } from "@/components/circuit-maker/circuit-elements";
@@ -16,14 +17,22 @@ import {
   TWO_TERMINAL_HANDLE_POSITIONS,
 } from "@/components/circuit-maker/rotation";
 
-/** 2DキャンバスのノードサイズがCircuitElementNode.tsxの`h-10 w-10`(40px)であることに対応する定数 */
-export const NODE_SIZE_PX = 40;
+/** 2DキャンバスのノードサイズがCircuitElementNode.tsxの`h-8 w-8`(32px)であることに対応する定数 */
+export const NODE_SIZE_PX = 32;
+/** 節点(junction)だけは他の素子より小さい箱(`h-6 w-6`=24px)で表示する */
+export const JUNCTION_SIZE_PX = 24;
 
 /**
  * フロー座標(px)→3Dワールド座標のスケール。
  * 40pxのノードがちょうど3D空間で1ユニットの立方体になるように選んでいる。
+ * (節点だけ箱のpxサイズが違っても、ワールド座標への変換スケール自体は全素子共通のこの値を使う)
  */
 export const FLOW_TO_3D_SCALE = 1 / NODE_SIZE_PX;
+
+/** 素子の種類ごとの、2Dキャンバスでのノードのpxサイズ(節点だけ小さい) */
+export function elementSizePx(elementType: CircuitElementType): number {
+  return elementType === "junction" ? JUNCTION_SIZE_PX : NODE_SIZE_PX;
+}
 
 /** フロー座標(px)上の1点。3D空間ではXZ平面(水平面)上の点として扱う。 */
 export type FlowPoint = { x: number; y: number };
@@ -34,9 +43,10 @@ function sideOffsetToPoint(
   centerY: number,
   side: Position,
   percentAlongSide: number,
+  sizePx: number,
 ): FlowPoint {
-  const half = NODE_SIZE_PX / 2;
-  const along = (percentAlongSide / 100) * NODE_SIZE_PX;
+  const half = sizePx / 2;
+  const along = (percentAlongSide / 100) * sizePx;
   switch (side) {
     case Position.Left:
       return { x: centerX - half, y: centerY - half + along };
@@ -58,16 +68,23 @@ export function terminalAbsolutePosition(
   node: CircuitElementNodeType,
   handleId: string,
 ): FlowPoint {
-  const centerX = node.position.x + NODE_SIZE_PX / 2;
-  const centerY = node.position.y + NODE_SIZE_PX / 2;
   const { elementType, rotation } = node.data;
+  const sizePx = elementSizePx(elementType);
+  const centerX = node.position.x + sizePx / 2;
+  const centerY = node.position.y + sizePx / 2;
 
-  if (elementType === "ground" || elementType === "junction") {
+  if (elementType === "junction") {
+    // 節点は2D側でも回転角に関わらず箱の中央に端子を固定しているため、そのまま中心点を返す
+    return { x: centerX, y: centerY };
+  }
+
+  if (elementType === "ground") {
     return sideOffsetToPoint(
       centerX,
       centerY,
       GROUND_HANDLE_POSITION[rotation],
       50,
+      sizePx,
     );
   }
 
@@ -78,6 +95,7 @@ export function terminalAbsolutePosition(
         centerY,
         TWO_TERMINAL_HANDLE_POSITIONS[rotation].a,
         50,
+        sizePx,
       );
     }
     const terminalCount = Math.max(
@@ -90,6 +108,7 @@ export function terminalAbsolutePosition(
       centerY,
       TWO_TERMINAL_HANDLE_POSITIONS[rotation].b,
       switchBTerminalOffsetPercent(index, terminalCount),
+      sizePx,
     );
   }
 
@@ -97,7 +116,7 @@ export function terminalAbsolutePosition(
     handleId === "a"
       ? TWO_TERMINAL_HANDLE_POSITIONS[rotation].a
       : TWO_TERMINAL_HANDLE_POSITIONS[rotation].b;
-  return sideOffsetToPoint(centerX, centerY, side, 50);
+  return sideOffsetToPoint(centerX, centerY, side, 50, sizePx);
 }
 
 /**

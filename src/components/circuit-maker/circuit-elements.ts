@@ -32,14 +32,6 @@ export const CIRCUIT_ELEMENT_TYPES = [
 /** 回路素子の種類を表す文字列リテラル型（"resistor" | "capacitor" | ... ） */
 export type CircuitElementType = (typeof CIRCUIT_ELEMENT_TYPES)[number]["id"];
 
-/**
- * ドラッグ&ドロップで素子の種類を伝えるときに使う、
- * dataTransfer 用の独自キー。
- * ブラウザ標準のMIMEタイプではなく、このアプリ専用の文字列にすることで
- * 他のドラッグ操作（画像のドラッグなど）と衝突しないようにしている。
- */
-export const CIRCUIT_ELEMENT_DRAG_DATA_KEY = "application/x-circuit-element";
-
 /** 回路セッティングエリアで編集する、1つのパラメータの定義 */
 export type ElementParamDef =
   | {

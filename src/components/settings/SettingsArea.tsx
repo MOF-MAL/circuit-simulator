@@ -55,20 +55,23 @@ export function SettingsArea() {
             <span className="truncate text-[11px] text-slate-400">
               ID: {selectedNode.id}
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                // updateNodeData: 指定したノード1件の data だけを更新する関数。
-                // ここで更新すると、CircuitCanvas 側のノード配列にも
-                // (同じ ReactFlowProvider を共有しているため)自動的に反映される。
-                updateNodeData(selectedNode.id, {
-                  rotation: nextRotation(selectedNode.data.rotation),
-                });
-              }}
-              className="shrink-0 rounded border border-slate-300 px-2 py-1 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
-            >
-              ↻ 90°回転
-            </button>
+            {/* 節点は端子が箱の中央に固定されており回転の意味を持たないため、回転ボタンは表示しない */}
+            {selectedNode.data.elementType !== "junction" && (
+              <button
+                type="button"
+                onClick={() => {
+                  // updateNodeData: 指定したノード1件の data だけを更新する関数。
+                  // ここで更新すると、CircuitCanvas 側のノード配列にも
+                  // (同じ ReactFlowProvider を共有しているため)自動的に反映される。
+                  updateNodeData(selectedNode.id, {
+                    rotation: nextRotation(selectedNode.data.rotation),
+                  });
+                }}
+                className="shrink-0 rounded border border-slate-300 px-2 py-1 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+              >
+                ↻ 90°回転
+              </button>
+            )}
           </div>
 
           {/* 素子の種類ごとのパラメータ入力欄 */}
