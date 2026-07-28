@@ -2,12 +2,17 @@
   "name": "circuit-simulator",
   "version": "0.1.0",
   "private": true,
+  "main": "dist-electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "electron:main:build": "tsc -p tsconfig.electron.json",
+    "electron:main:watch": "tsc -p tsconfig.electron.json --watch",
+    "electron:dev": "concurrently -k -n NEXT,MAIN,APP -c blue,yellow,green \"npm:dev\" \"npm:electron:main:watch\" \"wait-on http://localhost:3000 dist-electron/main.js && electron .\"",
+    "electron:build": "cross-env BUILD_TARGET=electron next build && npm run electron:main:build && electron-builder --win"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -19,6 +24,7 @@
     "react-dom": "19.2.4",
     "react-resizable-panels": "^4.12.2",
     "recharts": "^3.10.1",
+    "sirv": "^3.0.2",
     "three": "^0.185.1"
   },
   "devDependencies": {
@@ -28,7 +34,12 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.185.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^38.4.0",
+    "electron-builder": "^26.0.13",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^9.0.1"
   }
 }
